@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D#3d
+from sympy import symbols,diff
+
+#线搜索步长
+def BLS(f,df,xk,alpha,pk):
+    t=0.5
+    c=1e-4
+    f_k=f.subs(zip(x,xk))
+    df_k=[df[0].subs(zip(x,xk)),df[1].subs(zip(x,xk))]
+    while f.subs(zip(x,xk+alpha*pk))>f_k+c*alpha*np.dot(df_k,pk):
+        alpha=alpha*t
+    return alpha
+
+#梯度下降法
+def gd(x0,alpha0,f,df):
+    k=0
+    xk=x0
+    data_x1=[x0[0]]
+    data_x2=[x0[1]]
+    alpha=alpha0
+    alpha_save=[alpha]
+    df_k=[df[0].subs(zip(x,xk)),df[1].subs(zip(x,xk))]
+    df_k=np.array(df_k,dtype=np.float64)
+    while np.linalg.norm(df_k)>1e-6:
+        pk=[-1/np.linalg.norm(df_k)]*df_k
+        alpha=BLS(f,df,xk,alpha,pk)
+        alpha_save.append(alpha)
+        xk=xk+alpha*pk
+        k=k+1
+        data_x1.append(xk[0])
+        data_x2.append(xk[1])
+        df_k=[df[0].subs(zip(x,xk)),df[1].subs(zip(x,xk))]
+        df_k=np.array(df_k,dtype=np.float64)
+        #print(data_x1,data_x2,k)   
+   # m=np.arange(k)    
+    return data_x1,data_x2,k,alpha_save
+
+#牛顿法
+def Newton(x0,alpha0,f,df,hess):
+    k=0
+    xk=x0
+    data_x1=[x0[0]]#x
+    data_x2=[x0[1]]#y
+    alpha=alpha0
+    alpha_save=[alpha]
+    df_k=[df[0].subs(zip(x,xk)),df[1].subs(zip(x,xk))]
+    df_k=np.array(df_k,dtype=np.float64)
+    hess_k=[[hess[0,0].subs(zip(x,xk)),hess[0,1].subs(zip(x,xk))],[hess[1,0].subs(zip(x,xk)),hess[1,1].subs(zip(x,xk))]]
+    hess_k=np.array(hess_k,dtype=np.float64)
+    while np.linalg.norm(df_k)>1e-5:
+        pk=np.dot(-1*np.linalg.inv(hess_k),df_k)
+        alpha=BLS(f,df,xk,alpha,pk)
+        alpha_save.append(alpha)
+        xk=xk+alpha*pk
+        k=k+1
+        data_x1.append(xk[0])
+        data_x2.append(xk[1])
+        df_k=[df[0].subs(zip(x,xk)),df[1].subs(zip(x,xk))]
+        df_k=np.array(df_k,dtype=np.float64)
+        hess_k=[[hess[0,0].subs(zip(x,xk)),hess[0,1].subs(zip(x,xk))],[hess[1,0].subs(zip(x,xk)),hess[1,1].subs(zip(x,xk))]]
+        hess_k=np.float64(hess_k)
+        #print(data_x1,data_x2,k)
+    return data_x1,data_x2,k,alpha_save
+    
+if __name__=="__main__":
+    #初始化
+    x1=symbols('x1')
+    x2=symbols('x2')
+    x=[x1,x2]
+    x0=[-1.2,1]#初始值
+    alpha0=1
+
+    #求解最终解和迭代次数
+    f=100*(x2-x1**2)**2+(1-x1)**2
+    df=[diff(f,x1),diff(f,x2)]
+    hess=np.array([[diff(df[0],x1),diff(df[0],x2)],[diff(df[1],x1),diff(df[1],x2)]])
+    
+    #梯度下降法
+    data_x1_s,data_x2_s,k_s,alpha_s=gd(x0,alpha0,f,df)
+    X_s=[data_x1_s[-1],data_x2_s[-1]]
+    X_s=np.array(X_s)
+    print("梯度下降法：",X_s)
+    print("梯度下降法迭代次数：",k_s)
+    print("norm(x-x*):",np.linalg.norm(X_s-np.array([1,1])))
+    
+    #牛顿法
+    data_x1_n,data_x2_n,k_n,alpha_n=Newton(x0,alpha0,f,df,hess)
+    X_n=[data_x1_n[-1],data_x2_n[-1]]
+    X_n=np.array(X_n)
+    print("牛顿法：",X_n)
+    print("牛顿法迭代次数：",k_n)
+    print("norm(x-x*):",np.linalg.norm(X_n-np.array([1,1])))
