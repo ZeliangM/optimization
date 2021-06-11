@@ -1,0 +1,57 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+#函数表达式
+fun = lambda x:100*(x[0]**2 - x[1]**2)**2 +(x[0] - 1)**2
+#梯度向量
+gfun = lambda x:np.array([400*x[0]*(x[0]**2 - x[1]) + 2*(x[0] - 1),-200*(x[0]**2 - x[1])])
+
+def conj(fun,gfun,x0):
+    maxk = 1e4  #最大迭代次数
+    rho = 0.6
+    sigma = 0.4
+    gama = 0.7
+    epsilon = 1e-4
+    k = 0
+    m=0
+    n = np.shape(x0)[0]
+    y=[]
+    while(k<maxk):
+        g=gfun(x0)
+        if k==0:
+            dk=-g
+        else:
+            xk=np.dot(g,g.T)
+            yk=np.dot(g0,g0.T)
+            beta=xk/yk
+            dk=-g+beta*d0
+            gd=np.dot(g,dk.T)
+            if gd>=0:
+                dk=-g
+            if np.linalg.norm(g) < epsilon:
+                break
+        
+        # 用Wolfe条件搜索求步长
+        while m < 20: # 用Wolfe条件搜索求步长
+            gk1 = gfun(x0 + rho**m*dk)
+            if fun(x0+rho**m*dk) < fun(x0)+sigma*rho**m*np.dot(g,dk) and np.dot(gk1.T, dk) >=  gama*np.dot(g.T,dk):
+                mk = m
+                break
+            m += 1
+        x = x0 + rho**mk*dk
+        g0=g
+        d0=dk
+        k=k+1  #控制迭代次数  
+        x0=x
+    return x0,fun(x0),k#分别是最优点坐标，最优值，迭代次数 
+   
+
+def main():
+    x=[-1.2,1]#初始值
+    x0,fun0,k = conj(fun,gfun,np.array(x))
+    print("使用conj方法所求极值点为",x0)
+    print("函数值为",fun0)
+    print("迭代次数为",k)
+
+if __name__=="__main__":
+    main()        
