@@ -1,0 +1,57 @@
+import numpy as np
+#函数表达式
+fun = lambda x,t:x[0]+x[1]+0.5*t*((pow(x[0],2)+pow(x[1],2)-2))**2
+#梯度向量
+gfun =lambda x,t:np.array([x[1]+2*x[0]*t*(x[0]**2+x[1]**2-2),x[0]+2*x[1]*t*(x[0]**2+x[1]**2-2)],dtype=np.float)
+
+def bfgs(fun,gfun,x0,t):
+    #输入：x0是初始点，fun,gfun分别是目标函数和梯度，hess为Hessian矩阵
+    #输出：x,val分别是近似最优点和最优解,k是迭代次数  
+    maxk = 1e5
+    rho = 0.55
+    sigma = 0.4
+    gama = 0.7
+    epsilon = 1e-5
+    k = 0
+    n = np.shape(x0)[0]
+    #海森矩阵可以初始化为单位矩阵
+    Bk = np.eye(n) #np.linalg.inv(hess(x0)) #或者单位矩阵np.eye(n)
+    while k < maxk:
+        gk = gfun(x0,t)                   
+        dk = -1.0*np.linalg.solve(Bk,gk)
+        m = 0
+        mk = 0
+        while m < 20: # 用Wolfe条件搜索求步长
+            gk1 = gfun(x0 + rho**m*dk,t)
+            if fun(x0+rho**m*dk,t) < fun(x0,t)+sigma*rho**m*np.dot(gk,dk) and np.dot(gk1.T, dk) >=  gama*np.dot(gk.T,dk):
+                mk = m
+                break
+            m += 1
+        #BFGS校正
+        x = x0 + rho**mk*dk
+        #print("第"+str(k)+"次的迭代结果为："+str(x))
+        sk = x - x0
+        yk = gfun(x,t) - gk   
+
+        if np.dot(sk,yk) > 0:    
+            Bs = np.dot(Bk,sk)
+            ys = np.dot(yk,sk)
+            sBs = np.dot(np.dot(sk,Bk),sk) 
+            Bk = Bk - 1.0*Bs.reshape((n,1))*Bs/sBs + 1.0*yk.reshape((n,1))*yk/ys
+        k += 1
+        x0 = x
+        #print(x0) 
+        if np.linalg.norm(gk) < 1/t:
+            break
+    return x0,fun(x0,t),k #分别是最优点坐标，最优值，迭代次数 
+def main():
+    x=[-1.5,-1.5]#初始值
+    for t in [1,10,100,1000]:
+        #print(x)
+        x0 ,fun0 ,k= bfgs(fun,gfun,np.array(x),t)
+        x=x0
+        print("罚因子为",t,"最终求得的极值点为",x0)
+        print("函数值为",fun0)
+        print("迭代次数为",k)
+if __name__=="__main__":
+    main()
