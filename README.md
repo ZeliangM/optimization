@@ -9,6 +9,8 @@
 授课教材：Nocedal, Wright 2006 – Numerical optimization
 
 参考教材：《最优化：建模、理论与方法》高等教育出版社
+
           《最优化理论》北京大学出版社 高立
+          
           《最优化方法及其matlab实现》马昌凤
 
